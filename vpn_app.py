@@ -1272,11 +1272,22 @@ class TeletokApp(ctk.CTk):
                 if ok:
                     self.code_entry.delete(0, "end")
                     self.promo_status_lbl.configure(text=f"🎉 {msg}", text_color=COLOR_CONNECTED)
+                    self.engine.settings = load_settings()
                     self._check_subscription_bg()
+                    if self.engine.is_connected:
+                        threading.Thread(target=self._seamless_reconnect, daemon=True).start()
                 else:
                     self.promo_status_lbl.configure(text=f"Внимание: {msg}", text_color="#e74c3c")
             self.after(0, _cb)
         threading.Thread(target=_worker, daemon=True).start()
+
+    def _seamless_reconnect(self):
+        try:
+            self.engine.disconnect()
+            time.sleep(0.5)
+            self._worker_connect()
+        except Exception:
+            pass
 
     def start_yoomoney_payment(self):
         plan_id = self.selected_plan_id.get()

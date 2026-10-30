@@ -477,6 +477,12 @@ def fetch_subscription_status(client_id=None, timeout=4):
     if res.get("status") == "ok":
         sub = res.get("subscription", {})
         sub["is_owner"] = res.get("is_owner", False)
+        if res.get("node") and res["node"].get("uuid"):
+            settings = load_settings()
+            new_uuid = res["node"]["uuid"]
+            if settings.get("client_uuid") != new_uuid:
+                settings["client_uuid"] = new_uuid
+                save_settings(settings)
         return sub, res.get("plans")
     return None, None
 
@@ -534,7 +540,7 @@ def send_diagnostic_report(title="Отчет об ошибке клиента", 
         from vpn_updater import CURRENT_VERSION
         app_ver = CURRENT_VERSION
     except Exception:
-        app_ver = "2.6.2"
+        app_ver = "2.6.3"
 
     payload = {
         "title": str(title)[:140],
@@ -734,6 +740,7 @@ class VpnEngine:
         atexit.register(self.disconnect)
 
     def generate_xray_config(self, node_key):
+        self.settings = load_settings()
         nodes_dict = self.settings.get("nodes", {})
         node = nodes_dict.get(node_key) or NODES.get(node_key) or list(NODES.values())[0]
         
@@ -754,17 +761,16 @@ class VpnEngine:
 
         # DPI of RU ISPs selectively drops some uTLS fingerprints (chrome/edge/ios/android/randomized).
         # firefox & safari pass reliably on both ports -> 4 channels + auto-failover balancer.
-        # Determine personal client UUID from server identity
+        # Determine personal client UUID from server identity or cached settings
         active_uuid = self.settings.get("client_uuid") or node.get("uuid")
-        if not active_uuid:
-            try:
-                id_res = sync_identity()
-                if id_res.get("node") and id_res["node"].get("uuid"):
-                    active_uuid = id_res["node"]["uuid"]
-                    self.settings["client_uuid"] = active_uuid
-                    save_settings(self.settings)
-            except Exception:
-                pass
+        try:
+            id_res = sync_identity()
+            if id_res.get("status") == "ok" and id_res.get("node") and id_res["node"].get("uuid"):
+                active_uuid = id_res["node"]["uuid"]
+                self.settings["client_uuid"] = active_uuid
+                save_settings(self.settings)
+        except Exception:
+            pass
         if not active_uuid:
             active_uuid = "04756662-2f98-44ad-a53a-369d29118670"
 

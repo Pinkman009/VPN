@@ -329,7 +329,7 @@ class Panel:
 
     def add(self, email, uuid, sub_id, expiry_ms, limit_ip, comment=""):
         client = {
-            "email": email, "uuid": uuid, "subId": sub_id, "flow": "xtls-rprx-vision",
+            "id": str(uuid), "uuid": str(uuid), "email": email, "subId": sub_id, "flow": "xtls-rprx-vision",
             "enable": True, "expiryTime": int(expiry_ms), "limitIp": int(limit_ip),
             "totalGB": 0, "comment": comment,
         }
