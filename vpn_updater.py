@@ -13,7 +13,7 @@ import urllib.request
 import subprocess
 import threading
 
-CURRENT_VERSION = "2.6.4"
+CURRENT_VERSION = "2.6.5"
 GITHUB_REPO = "Pinkman009/VPN"
 RELEASES_API = f"https://api.github.com/repos/{GITHUB_REPO}/releases/latest"
 

@@ -71,3 +71,5 @@ vpn_client_runtime.json
 .vscode/
 Thumbs.db
 Desktop.ini
+
+scratch/

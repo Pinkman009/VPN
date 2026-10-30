@@ -102,10 +102,10 @@ def self_heal_network():
 NODES = {
     "443-ff": {
         "name": "Финляндия 443 (Firefox)",
-        "desc": "Порт 443 (Cloudflare SNI + Firefox FP)",
+        "desc": "Порт 443 (Azure SNI + Firefox FP)",
         "vps_host": "193.233.138.42",
         "vps_port": 443,
-        "sni": "speed.cloudflare.com",
+        "sni": "azure.microsoft.com",
         "fingerprint": "firefox",
         "pbk": "t0hTDOJOklZjxWHR_hJo2gg6nWUmSNA-gxFdERpTWRE",
         "sid": "dae45f",
@@ -141,7 +141,7 @@ NODES = {
         "desc": "Резервный узел 443",
         "vps_host": "193.233.138.42",
         "vps_port": 443,
-        "sni": "speed.cloudflare.com",
+        "sni": "azure.microsoft.com",
         "fingerprint": "firefox",
         "pbk": "t0hTDOJOklZjxWHR_hJo2gg6nWUmSNA-gxFdERpTWRE",
         "sid": "dae45f",
@@ -569,7 +569,7 @@ def send_diagnostic_report(title="Отчет об ошибке клиента", 
         "device_name": platform.node() or "Windows-PC"
     }
 
-    res = _api_request("/api/report_error", data=payload, timeout=8)
+    res = _api_request("/api/report_error", data=payload, timeout=15)
     if res.get("status") == "ok":
         return True, res.get("issue_url", "Отчет отправлен разработчику")
     return False, res.get("message", "Не удалось отправить отчет")

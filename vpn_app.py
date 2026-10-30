@@ -206,15 +206,15 @@ class ShareQrDialog(ctk.CTkToplevel):
             )
             btn_txt = "📋 Скопировать ссылку подписки"
         elif "443" in mode:
-            link = f"vless://{uuid_val}@193.233.138.42:443?security=reality&encryption=none&pbk=t0hTDOJOklZjxWHR_hJo2gg6nWUmSNA-gxFdERpTWRE&headerType=none&fp=chrome&spx=%2F&type=tcp&flow=xtls-rprx-vision&sni=speed.cloudflare.com&sid=dae45f#Unblocknet-Cloudflare-443"
+            link = f"vless://{uuid_val}@193.233.138.42:443?security=reality&encryption=none&pbk=t0hTDOJOklZjxWHR_hJo2gg6nWUmSNA-gxFdERpTWRE&headerType=none&fp=safari&spx=%2F&type=tcp&flow=xtls-rprx-vision&sni=azure.microsoft.com&sid=dae45f#Unblocknet-Azure-443"
             info = (
-                "🌐 Основной прямой VLESS ключ (Порт 443 — Cloudflare).\n"
-                "Отпечаток: Chrome (100% защита от ТСПУ и DPI блокировок).\n"
+                "🌐 Основной прямой VLESS ключ (Порт 443 — Microsoft Azure).\n"
+                "Отпечаток: Safari (100% защита от ТСПУ и DPI блокировок).\n"
                 "Подходит для любого VPN-клиента (Happ, V2Box, Hiddify, v2rayNG)."
             )
             btn_txt = "📋 Скопировать VLESS ключ (Порт 443)"
         else:
-            link = f"vless://{uuid_val}@193.233.138.42:2053?security=reality&encryption=none&pbk=t0hTDOJOklZjxWHR_hJo2gg6nWUmSNA-gxFdERpTWRE&headerType=none&fp=chrome&spx=%2F&type=tcp&flow=xtls-rprx-vision&sni=azure.microsoft.com&sid=dae45f#Unblocknet-Azure-2053"
+            link = f"vless://{uuid_val}@193.233.138.42:2053?security=reality&encryption=none&pbk=t0hTDOJOklZjxWHR_hJo2gg6nWUmSNA-gxFdERpTWRE&headerType=none&fp=safari&spx=%2F&type=tcp&flow=xtls-rprx-vision&sni=azure.microsoft.com&sid=dae45f#Unblocknet-Azure-2053"
             info = (
                 "🛡️ Резервный прямой VLESS ключ (Порт 2053 — Microsoft Azure).\n"
                 "Нестандартный защищенный порт. Обходит фильтрацию порта 443.\n"
