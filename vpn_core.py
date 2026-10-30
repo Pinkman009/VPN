@@ -474,7 +474,7 @@ def request_owner_email_code(email, timeout=6):
     return False, res.get("message", "Ошибка отправки кода")
 
 def activate_code(code, timeout=6):
-    """Activates an 8-digit or 6-digit activation code (owner, promo, or link)."""
+    """Activates an 8-digit promo, 6-digit OTP, or developer email / master key."""
     res = _api_request("/api/activate", data={"code": code.strip()}, timeout=timeout)
     if res.get("status") == "ok":
         if res.get("node") and res["node"].get("uuid"):
@@ -482,7 +482,40 @@ def activate_code(code, timeout=6):
             settings["client_uuid"] = res["node"]["uuid"]
             save_settings(settings)
         return True, res.get("message", "Код успешно активирован!"), res
-    return False, res.get("message", "Код недействителен"), None
+    return False, res.get("message", "Код или email недействителен"), None
+
+def send_diagnostic_report(title="Отчет об ошибке клиента", detail="Пользователь запросил проверку"):
+    """Collects recent client logs, system info and sends an issue to GitHub via VPS API."""
+    import platform
+    xray_log_tail = ""
+    xray_log_path = os.path.join(USER_DATA_DIR, "xray.log")
+    try:
+        if os.path.exists(xray_log_path):
+            with open(xray_log_path, "r", encoding="utf-8", errors="ignore") as f:
+                lines = f.readlines()
+                xray_log_tail = "".join(lines[-40:])
+    except Exception:
+        pass
+
+    try:
+        from vpn_updater import CURRENT_VERSION
+        app_ver = CURRENT_VERSION
+    except Exception:
+        app_ver = "2.6.1"
+
+    payload = {
+        "title": str(title)[:140],
+        "detail": str(detail)[:3500],
+        "xray_log": xray_log_tail[:7000],
+        "app_version": app_ver,
+        "os_info": f"{platform.system()} {platform.release()} (Build {platform.version()})",
+        "device_name": platform.node() or "Windows-PC"
+    }
+
+    res = _api_request("/api/report_error", data=payload, timeout=8)
+    if res.get("status") == "ok":
+        return True, res.get("issue_url", "Отчет отправлен разработчику")
+    return False, res.get("message", "Не удалось отправить отчет")
 
 def sync_add_domain_to_server(domain, mode="proxy", timeout=4):
     res = _api_request("/api/domains/add", data={"domain": domain, "mode": mode}, timeout=timeout)

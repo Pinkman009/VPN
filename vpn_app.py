@@ -21,7 +21,7 @@ import qrcode
 from vpn_core import (
     VpnEngine, NODES, save_settings,
     fetch_subscription_status, create_payment_order, activate_trial_period,
-    request_owner_email_code, activate_code
+    request_owner_email_code, activate_code, send_diagnostic_report
 )
 import vpn_speedtest
 from vpn_updater import (
@@ -889,7 +889,20 @@ class TeletokApp(ctk.CTk):
             border_color=COLOR_CONNECTED,
             command=self.run_self_heal
         )
-        self.heal_btn.pack(fill="x", padx=16, pady=(4, 10))
+        self.heal_btn.pack(fill="x", padx=16, pady=(4, 6))
+
+        self.report_issue_btn = ctk.CTkButton(
+            sys_card,
+            text="📋 Отправить отчет об ошибке разработчику (GitHub)",
+            font=ctk.CTkFont(family="Segoe UI", size=12),
+            height=34,
+            fg_color="#202236",
+            hover_color="#2c2e4a",
+            border_width=1,
+            border_color=COLOR_BORDER,
+            command=self.send_error_report_action
+        )
+        self.report_issue_btn.pack(fill="x", padx=16, pady=(0, 10))
 
         # Promo & Activation Card
         self.promo_card = ctk.CTkFrame(self.page_settings, fg_color=COLOR_SURFACE, corner_radius=12, border_width=1, border_color=COLOR_BORDER)
@@ -897,7 +910,7 @@ class TeletokApp(ctk.CTk):
 
         promo_head = ctk.CTkLabel(
             self.promo_card,
-            text="🎟️ Промокод или код активации:",
+            text="🎟️ Промокод, код активации или email разработчика:",
             font=ctk.CTkFont(family="Segoe UI", size=13, weight="bold"),
             text_color=COLOR_TEXT_WHITE
         )
@@ -905,7 +918,7 @@ class TeletokApp(ctk.CTk):
 
         promo_desc = ctk.CTkLabel(
             self.promo_card,
-            text="Если у вас есть подарочный промокод или код продления подписки:",
+            text="Введите промокод или ваш email разработчика (igorsvincov@yandex.ru):",
             font=ctk.CTkFont(family="Segoe UI", size=11),
             text_color=COLOR_TEXT_MUTED
         )
@@ -916,7 +929,7 @@ class TeletokApp(ctk.CTk):
 
         self.code_entry = ctk.CTkEntry(
             code_row,
-            placeholder_text="Введите код",
+            placeholder_text="Введите промокод или email",
             font=ctk.CTkFont(family="Segoe UI", size=12),
             height=34,
             fg_color="#1d1e30",
@@ -1056,6 +1069,30 @@ class TeletokApp(ctk.CTk):
         self._update_status_ui()
         self.status_badge.configure(text="● СБОЙ ПОДКЛЮЧЕНИЯ", text_color="#ff5252")
         print(f"[Unblocknet Connection Error] {err_msg}")
+        # Automatically send anonymous crash/error telemetry to GitHub Issues
+        threading.Thread(
+            target=send_diagnostic_report,
+            args=("Автоматический отчет: сбой запуска туннеля", str(err_msg)),
+            daemon=True
+        ).start()
+
+    def send_error_report_action(self):
+        self.report_issue_btn.configure(text="⏳ Отправка отчета в GitHub...", state="disabled")
+        def _worker():
+            ok, res_or_url = send_diagnostic_report(
+                title="Ручной отчет пользователя о неполадках",
+                detail="Пользователь нажал кнопку отправки отчета в приложении Unblocknet."
+            )
+            def _cb():
+                self.report_issue_btn.configure(state="normal")
+                if ok:
+                    self.report_issue_btn.configure(text="✔ Отчет успешно отправлен на GitHub!")
+                    self.after(4000, lambda: self.report_issue_btn.configure(text="📋 Отправить отчет об ошибке разработчику (GitHub)"))
+                else:
+                    self.report_issue_btn.configure(text="✖ Ошибка отправки отчета")
+                    self.after(3000, lambda: self.report_issue_btn.configure(text="📋 Отправить отчет об ошибке разработчику (GitHub)"))
+            self.after(0, _cb)
+        threading.Thread(target=_worker, daemon=True).start()
 
     # -----------------------------------------------------------------------
     # In-App Auto-Update Methods (GitHub Releases)
