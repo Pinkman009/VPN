@@ -1,0 +1,234 @@
+{
+  "log": {
+    "disabled": false,
+    "level": "info",
+    "timestamp": true
+  },
+  "dns": {
+    "servers": [
+      {
+        "tag": "dns-remote",
+        "address": "tcp://8.8.8.8",
+        "address_resolver": "dns-direct",
+        "strategy": "ipv4_only",
+        "detour": "proxy"
+      },
+      {
+        "tag": "dns-direct",
+        "address": "77.88.8.8",
+        "strategy": "ipv4_only",
+        "detour": "direct"
+      },
+      {
+        "tag": "dns-block",
+        "address": "rcode://success"
+      }
+    ],
+    "rules": [
+      {
+        "outbound": "any",
+        "server": "dns-direct"
+      },
+      {
+        "clash_mode": "Direct",
+        "server": "dns-direct"
+      },
+      {
+        "clash_mode": "Global",
+        "server": "dns-remote"
+      },
+      {
+        "geosite": "category-ru",
+        "server": "dns-direct"
+      },
+      {
+        "domain_suffix": [
+          ".ru",
+          ".su",
+          ".рф",
+          "gosuslugi.ru",
+          "sberbank.ru",
+          "tbank.ru",
+          "tinkoff.ru",
+          "alfabank.ru",
+          "vtb.ru",
+          "kinopoisk.ru",
+          "ozon.ru",
+          "wildberries.ru",
+          "avito.ru",
+          "yandex.ru",
+          "ya.ru",
+          "vk.com",
+          "mail.ru",
+          "max.ru"
+        ],
+        "server": "dns-direct"
+      }
+    ],
+    "final": "dns-remote",
+    "strategy": "ipv4_only"
+  },
+  "inbounds": [
+    {
+      "type": "tun",
+      "tag": "tun-in",
+      "inet4_address": "172.19.0.1/30",
+      "auto_route": true,
+      "strict_route": true,
+      "stack": "system",
+      "sniff": true,
+      "sniff_override_destination": true
+    },
+    {
+      "type": "mixed",
+      "tag": "mixed-in",
+      "listen": "127.0.0.1",
+      "listen_port": 2080,
+      "sniff": true,
+      "sniff_override_destination": true
+    }
+  ],
+  "outbounds": [
+    {
+      "type": "vless",
+      "tag": "proxy",
+      "server": "193.233.138.42",
+      "server_port": 443,
+      "uuid": "04756662-2f98-44ad-a53a-369d29118670",
+      "flow": "xtls-rprx-vision",
+      "tls": {
+        "enabled": true,
+        "server_name": "speed.cloudflare.com",
+        "utls": {
+          "enabled": true,
+          "fingerprint": "randomized"
+        },
+        "reality": {
+          "enabled": true,
+          "public_key": "t0hTDOJOklZjxWHR_hJo2gg6nWUmSNA-gxFdERpTWRE",
+          "short_id": "dae45f"
+        }
+      },
+      "packet_encoding": "xudp"
+    },
+    {
+      "type": "vless",
+      "tag": "proxy-backup-2053",
+      "server": "193.233.138.42",
+      "server_port": 2053,
+      "uuid": "04756662-2f98-44ad-a53a-369d29118670",
+      "flow": "xtls-rprx-vision",
+      "tls": {
+        "enabled": true,
+        "server_name": "azure.microsoft.com",
+        "utls": {
+          "enabled": true,
+          "fingerprint": "randomized"
+        },
+        "reality": {
+          "enabled": true,
+          "public_key": "t0hTDOJOklZjxWHR_hJo2gg6nWUmSNA-gxFdERpTWRE",
+          "short_id": "be146e24233aec"
+        }
+      },
+      "packet_encoding": "xudp"
+    },
+    {
+      "type": "direct",
+      "tag": "direct"
+    },
+    {
+      "type": "block",
+      "tag": "block"
+    },
+    {
+      "type": "dns",
+      "tag": "dns-out"
+    }
+  ],
+  "route": {
+    "rules": [
+      {
+        "protocol": "dns",
+        "outbound": "dns-out"
+      },
+      {
+        "port": 443,
+        "network": "udp",
+        "outbound": "block"
+      },
+      {
+        "clash_mode": "Direct",
+        "outbound": "direct"
+      },
+      {
+        "clash_mode": "Global",
+        "outbound": "proxy"
+      },
+      {
+        "ip_is_private": true,
+        "outbound": "direct"
+      },
+      {
+        "domain_suffix": [
+          ".ru",
+          ".su",
+          ".рф",
+          "gosuslugi.ru",
+          "sberbank.ru",
+          "tbank.ru",
+          "tinkoff.ru",
+          "alfabank.ru",
+          "vtb.ru",
+          "kinopoisk.ru",
+          "okko.tv",
+          "ivi.ru",
+          "premier.one",
+          "wink.ru",
+          "rutube.ru",
+          "ozon.ru",
+          "wildberries.ru",
+          "avito.ru",
+          "yandex.ru",
+          "ya.ru",
+          "dzen.ru",
+          "vk.com",
+          "vk.ru",
+          "mail.ru",
+          "rambler.ru",
+          "nalog.gov.ru",
+          "mos.ru",
+          "emias.info",
+          "cbr.ru",
+          "rbc.ru",
+          "max.ru"
+        ],
+        "outbound": "direct"
+      },
+      {
+        "geosite": "category-ru",
+        "outbound": "direct"
+      },
+      {
+        "geoip": "ru",
+        "outbound": "direct"
+      },
+      {
+        "geosite": [
+          "openai",
+          "anthropic",
+          "youtube",
+          "instagram",
+          "twitter",
+          "discord",
+          "spotify",
+          "notion",
+          "canva"
+        ],
+        "outbound": "proxy"
+      }
+    ],
+    "final": "proxy",
+    "auto_detect_interface": true
+  }
+}

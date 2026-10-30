@@ -1,0 +1,39 @@
+import subprocess, json, time
+
+cfg = {
+  "log": { "level": "trace" },
+  "inbounds": [{ "type": "mixed", "tag": "mixed-in", "listen": "127.0.0.1", "listen_port": 20880 }],
+  "outbounds": [{
+    "type": "vless",
+    "tag": "proxy",
+    "server": "193.233.138.42",
+    "server_port": 443,
+    "uuid": "04756662-2f98-44ad-a53a-369d29118670",
+    "flow": "xtls-rprx-vision",
+    "tls": {
+      "enabled": True,
+      "server_name": "speed.cloudflare.com",
+      "utls": { "enabled": True, "fingerprint": "randomized" },
+      "reality": {
+        "enabled": True,
+        "public_key": "t0hTDOJOklZjxWHR_hJo2gg6nWUmSNA-gxFdERpTWRE",
+        "short_id": "dae45f"
+      }
+    }
+  }]
+}
+
+with open('test_debug_singbox.json', 'w') as f:
+    json.dump(cfg, f, indent=2)
+
+sb = r'v2rayN\v2rayN-windows-64\bin\sing_box\sing-box.exe'
+p = subprocess.Popen([sb, 'run', '-c', 'test_debug_singbox.json'], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+time.sleep(1.5)
+
+r = subprocess.run(['curl', '-k', '-s', '-o', '/dev/null', '-w', '%{http_code}', '-x', 'http://127.0.0.1:20880', '--max-time', '4', 'https://www.google.com'], capture_output=True, text=True)
+
+p.kill()
+out, _ = p.communicate()
+print("HTTP Code:", r.stdout.strip())
+print("Sing-box full output:")
+print(out)

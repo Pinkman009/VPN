@@ -1,0 +1,73 @@
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# PyInstaller / Build
+build/
+dist/
+*.spec.bak
+Unblocknet.exe
+*.exe
+
+# Large archives & heavy external packages (binaries belong in GitHub Releases)
+*.zip
+*.tar.gz
+*.7z
+v2rayN/
+TeletokConnect-Windows/
+client_test/
+platform-tools/
+.wrangler/
+.kilo/
+
+# Geo databases (downloaded via in-app updater or GitHub)
+geoip.dat
+geosite.dat
+
+# Browser temporary profiles & test traces
+chrome_profile/
+chrome_temp/
+uidump*.xml
+c_*.txt
+*.log
+cookie*.txt
+
+# Temporary test screenshots (keep only UI assets)
+screen*.png
+hiddify*.png
+conn*.png
+crop*.png
+current_state.png
+fresh_nodes.png
+home.png
+nodes.png
+phone_screen.png
+ping_results*.png
+sub_refreshed.png
+tls_tricks*.png
+updated*.png
+vpn_qr_*.png
+back.png
+
+# Keep UI assets
+!btn_off.png
+!btn_on.png
+
+# Sensitive private keys, server backups and local tokens
+vpn-keys-and-links.txt
+backup/
+*.db
+*.sqlite
+secrets.env
+*.dat
+outbox.jsonl
+state.json
+vpn_client_runtime.json
+
+# IDE / System
+.system_generated/
+.idea/
+.vscode/
+Thumbs.db
+Desktop.ini

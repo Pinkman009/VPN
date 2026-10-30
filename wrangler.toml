@@ -1,0 +1,7 @@
+name = "vpn-relay"
+main = "cf-worker-worker.js"
+compatibility_date = "2024-11-27"
+
+[vars]
+UUID = "f0ba27ab-279d-4dd5-ad87-821d2351c2ba"
+PROXYIP = ""

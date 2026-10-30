@@ -1,0 +1,267 @@
+{
+  "log": {
+    "loglevel": "debug"
+  },
+  "inbounds": [
+    {
+      "tag": "http-in",
+      "listen": "127.0.0.1",
+      "port": 10897,
+      "protocol": "http",
+      "sniffing": {
+        "enabled": true,
+        "destOverride": [
+          "http",
+          "tls",
+          "quic"
+        ],
+        "routeOnly": true
+      }
+    },
+    {
+      "tag": "socks-in",
+      "listen": "127.0.0.1",
+      "port": 10898,
+      "protocol": "socks",
+      "settings": {
+        "auth": "noauth",
+        "udp": true
+      },
+      "sniffing": {
+        "enabled": true,
+        "destOverride": [
+          "http",
+          "tls",
+          "quic"
+        ],
+        "routeOnly": true
+      }
+    }
+  ],
+  "observatory": {
+    "subjectSelector": [
+      "p-"
+    ],
+    "probeURL": "https://www.gstatic.com/generate_204",
+    "probeInterval": "30s",
+    "enableConcurrency": true
+  },
+  "outbounds": [
+    {
+      "tag": "p-443-ff",
+      "protocol": "vless",
+      "settings": {
+        "vnext": [
+          {
+            "address": "193.233.138.42",
+            "port": 443,
+            "users": [
+              {
+                "id": "04756662-2f98-44ad-a53a-369d29118670",
+                "encryption": "none",
+                "flow": "xtls-rprx-vision"
+              }
+            ]
+          }
+        ]
+      },
+      "streamSettings": {
+        "network": "tcp",
+        "security": "reality",
+        "realitySettings": {
+          "serverName": "speed.cloudflare.com",
+          "fingerprint": "firefox",
+          "publicKey": "t0hTDOJOklZjxWHR_hJo2gg6nWUmSNA-gxFdERpTWRE",
+          "shortId": "dae45f",
+          "spiderX": "/"
+        }
+      }
+    },
+    {
+      "tag": "p-2053-sf",
+      "protocol": "vless",
+      "settings": {
+        "vnext": [
+          {
+            "address": "193.233.138.42",
+            "port": 2053,
+            "users": [
+              {
+                "id": "04756662-2f98-44ad-a53a-369d29118670",
+                "encryption": "none",
+                "flow": "xtls-rprx-vision"
+              }
+            ]
+          }
+        ]
+      },
+      "streamSettings": {
+        "network": "tcp",
+        "security": "reality",
+        "realitySettings": {
+          "serverName": "azure.microsoft.com",
+          "fingerprint": "safari",
+          "publicKey": "t0hTDOJOklZjxWHR_hJo2gg6nWUmSNA-gxFdERpTWRE",
+          "shortId": "dae45f",
+          "spiderX": "/"
+        }
+      }
+    },
+    {
+      "tag": "p-2053-ff",
+      "protocol": "vless",
+      "settings": {
+        "vnext": [
+          {
+            "address": "193.233.138.42",
+            "port": 2053,
+            "users": [
+              {
+                "id": "04756662-2f98-44ad-a53a-369d29118670",
+                "encryption": "none",
+                "flow": "xtls-rprx-vision"
+              }
+            ]
+          }
+        ]
+      },
+      "streamSettings": {
+        "network": "tcp",
+        "security": "reality",
+        "realitySettings": {
+          "serverName": "azure.microsoft.com",
+          "fingerprint": "firefox",
+          "publicKey": "t0hTDOJOklZjxWHR_hJo2gg6nWUmSNA-gxFdERpTWRE",
+          "shortId": "dae45f",
+          "spiderX": "/"
+        }
+      }
+    },
+    {
+      "tag": "p-443-sf",
+      "protocol": "vless",
+      "settings": {
+        "vnext": [
+          {
+            "address": "193.233.138.42",
+            "port": 443,
+            "users": [
+              {
+                "id": "04756662-2f98-44ad-a53a-369d29118670",
+                "encryption": "none",
+                "flow": "xtls-rprx-vision"
+              }
+            ]
+          }
+        ]
+      },
+      "streamSettings": {
+        "network": "tcp",
+        "security": "reality",
+        "realitySettings": {
+          "serverName": "speed.cloudflare.com",
+          "fingerprint": "safari",
+          "publicKey": "t0hTDOJOklZjxWHR_hJo2gg6nWUmSNA-gxFdERpTWRE",
+          "shortId": "dae45f",
+          "spiderX": "/"
+        }
+      }
+    },
+    {
+      "tag": "direct",
+      "protocol": "freedom",
+      "settings": {
+        "domainStrategy": "UseIPv4"
+      }
+    },
+    {
+      "tag": "block",
+      "protocol": "blackhole"
+    }
+  ],
+  "routing": {
+    "domainStrategy": "AsIs",
+    "rules": [
+      {
+        "type": "field",
+        "outboundTag": "block",
+        "port": "443",
+        "network": "udp"
+      },
+      {
+        "type": "field",
+        "outboundTag": "block",
+        "ip": [
+          "::/0"
+        ]
+      },
+      {
+        "type": "field",
+        "outboundTag": "block",
+        "domain": [
+          "geosite:category-ads-all",
+          "domain:googleads.g.doubleclick.net",
+          "domain:pagead2.googlesyndication.com",
+          "domain:adservice.google.com",
+          "domain:video-stats.l.google.com",
+          "domain:ad.doubleclick.net",
+          "domain:ads.vk.com",
+          "domain:ad.mail.ru",
+          "domain:top-fwz1.mail.ru",
+          "domain:target.my.com",
+          "domain:an.yandex.ru",
+          "domain:mc.yandex.ru",
+          "domain:ad.adriver.ru",
+          "domain:content.adriver.ru"
+        ]
+      },
+      {
+        "type": "field",
+        "outboundTag": "direct",
+        "domain": [
+          "geosite:category-ru",
+          "geosite:private",
+          "regexp:.*\\.ru$",
+          "regexp:.*\\.su$",
+          "regexp:.*\\.xn--p1ai$",
+          "domain:yandex.ru",
+          "domain:gosuslugi.ru",
+          "domain:sberbank.ru",
+          "domain:tinkoff.ru",
+          "domain:t-bank.ru",
+          "domain:vk.com",
+          "domain:ozon.ru",
+          "domain:wildberries.ru",
+          "domain:kinopoisk.ru"
+        ]
+      },
+      {
+        "type": "field",
+        "outboundTag": "direct",
+        "ip": [
+          "10.0.0.0/8",
+          "172.16.0.0/12",
+          "192.168.0.0/16",
+          "127.0.0.0/8"
+        ]
+      },
+      {
+        "type": "field",
+        "balancerTag": "auto",
+        "network": "tcp,udp"
+      }
+    ],
+    "balancers": [
+      {
+        "tag": "auto",
+        "selector": [
+          "p-"
+        ],
+        "strategy": {
+          "type": "leastPing"
+        },
+        "fallbackTag": "p-443-ff"
+      }
+    ]
+  }
+}

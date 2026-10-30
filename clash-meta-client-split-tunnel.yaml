@@ -1,0 +1,95 @@
+
+port: 7890
+socks-port: 7891
+mixed-port: 7892
+allow-lan: false
+mode: rule
+log-level: info
+ipv6: false
+
+dns:
+  enable: true
+  listen: 127.0.0.1:1053
+  enhanced-mode: fake-ip
+  fake-ip-range: 198.18.0.1/16
+  nameserver:
+    - 77.88.8.8
+    - 8.8.8.8
+  fallback:
+    - https://8.8.8.8/dns-query
+  fallback-filter:
+    geoip: true
+    geoip-code: RU
+    ipcidr:
+      - 240.0.0.0/4
+
+proxies:
+  - name: "VLESS-Reality-443"
+    type: vless
+    server: 193.233.138.42
+    port: 443
+    uuid: 04756662-2f98-44ad-a53a-369d29118670
+    network: tcp
+    tls: true
+    udp: true
+    flow: xtls-rprx-vision
+    servername: speed.cloudflare.com
+    reality-opts:
+      public-key: t0hTDOJOklZjxWHR_hJo2gg6nWUmSNA-gxFdERpTWRE
+      short-id: dae45f
+    client-fingerprint: chrome
+
+  - name: "VLESS-Reality-2053"
+    type: vless
+    server: 193.233.138.42
+    port: 2053
+    uuid: 04756662-2f98-44ad-a53a-369d29118670
+    network: tcp
+    tls: true
+    udp: true
+    flow: xtls-rprx-vision
+    servername: azure.microsoft.com
+    reality-opts:
+      public-key: t0hTDOJOklZjxWHR_hJo2gg6nWUmSNA-gxFdERpTWRE
+      short-id: be146e24233aec
+    client-fingerprint: chrome
+
+proxy-groups:
+  - name: PROXY
+    type: select
+    proxies:
+      - VLESS-Reality-443
+      - VLESS-Reality-2053
+
+rules:
+  # Блокировка QUIC (UDP 443) для форсирования TCP/HTTP2 (обход замедления YouTube ТСПУ)
+  - AND,((NETWORK,udp),(DST-PORT,443)),REJECT
+  # Локальные сети напрямую
+  - GEOIP,lan,DIRECT,no-resolve
+  # Сайты и сервисы РФ напрямую (Госуслуги, банки, .ru, .su, .рф)
+  - GEOSITE,category-ru,DIRECT
+  - DOMAIN-SUFFIX,ru,DIRECT
+  - DOMAIN-SUFFIX,su,DIRECT
+  - DOMAIN-SUFFIX,рф,DIRECT
+  - DOMAIN-KEYWORD,gosuslugi,DIRECT
+  - DOMAIN-KEYWORD,sberbank,DIRECT
+  - DOMAIN-KEYWORD,tinkoff,DIRECT
+  - DOMAIN-KEYWORD,tbank,DIRECT
+  - DOMAIN-KEYWORD,alfabank,DIRECT
+  - DOMAIN-KEYWORD,vtb,DIRECT
+  - DOMAIN-KEYWORD,kinopoisk,DIRECT
+  - DOMAIN-KEYWORD,yandex,DIRECT
+  - DOMAIN-KEYWORD,wildberries,DIRECT
+  - DOMAIN-KEYWORD,ozon,DIRECT
+  - DOMAIN-KEYWORD,avito,DIRECT
+  - GEOIP,RU,DIRECT
+  # Заблокированные и гео-ограниченные сервисы через Финляндию
+  - GEOSITE,openai,PROXY
+  - GEOSITE,anthropic,PROXY
+  - GEOSITE,youtube,PROXY
+  - GEOSITE,instagram,PROXY
+  - GEOSITE,twitter,PROXY
+  - GEOSITE,discord,PROXY
+  - GEOSITE,spotify,PROXY
+  - GEOSITE,notion,PROXY
+  - MATCH,PROXY
