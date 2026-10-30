@@ -112,14 +112,14 @@ class ShareQrDialog(ctk.CTkToplevel):
     def __init__(self, parent, engine):
         super().__init__(parent)
         self.title("Подключение смартфона — QR код")
-        self.geometry("460x600")
+        self.geometry("480x640")
         self.resizable(False, False)
         self.configure(fg_color=COLOR_BG)
         self.engine = engine
         self.transient(parent)
         self.grab_set()
 
-        self.platform_var = ctk.StringVar(value="Android")
+        self.mode_var = ctk.StringVar(value="⚡ Подписка (2 канала)")
 
         title = ctk.CTkLabel(
             self,
@@ -131,7 +131,7 @@ class ShareQrDialog(ctk.CTkToplevel):
 
         sub = ctk.CTkLabel(
             self,
-            text="Отсканируйте QR в приложении Happ или Hiddify",
+            text="Для приложений Happ, Hiddify, Streisand, v2rayNG",
             font=ctk.CTkFont(family="Segoe UI", size=13),
             text_color=COLOR_TEXT_MUTED
         )
@@ -139,15 +139,15 @@ class ShareQrDialog(ctk.CTkToplevel):
 
         self.seg_btn = ctk.CTkSegmentedButton(
             self,
-            values=["Android (Happ / Hiddify)", "Apple iOS (Happ / Streisand)"],
-            variable=self.platform_var,
+            values=["⚡ Подписка (2 канала)", "🌐 Порт 443", "🛡️ Резерв 2053"],
+            variable=self.mode_var,
             command=self.update_qr,
-            font=ctk.CTkFont(family="Segoe UI", size=13),
+            font=ctk.CTkFont(family="Segoe UI", size=12, weight="bold"),
             selected_color=COLOR_PRIMARY,
             selected_hover_color=COLOR_PRIMARY_HOVER,
             height=36
         )
-        self.seg_btn.pack(padx=28, pady=(0, 14), fill="x")
+        self.seg_btn.pack(padx=24, pady=(0, 12), fill="x")
 
         self.qr_card = ctk.CTkFrame(self, fg_color="white", corner_radius=12, width=220, height=220)
         self.qr_card.pack(pady=4)
@@ -158,16 +158,16 @@ class ShareQrDialog(ctk.CTkToplevel):
 
         self.info_label = ctk.CTkLabel(
             self,
-            text="1. Откройте Happ на смартфоне\n2. Нажмите «+» ➔ «Сканировать QR-код»\n3. Готово! Все настройки применятся автоматически.",
+            text="",
             font=ctk.CTkFont(family="Segoe UI", size=12),
             text_color=COLOR_TEXT_MUTED,
             justify="center"
         )
-        self.info_label.pack(pady=(12, 10))
+        self.info_label.pack(pady=(12, 10), padx=20)
 
         self.copy_btn = ctk.CTkButton(
             self,
-            text="📋 Скопировать ключ VLESS",
+            text="📋 Скопировать ссылку подписки",
             font=ctk.CTkFont(family="Segoe UI", size=13),
             height=36,
             fg_color=COLOR_SURFACE,
@@ -192,15 +192,44 @@ class ShareQrDialog(ctk.CTkToplevel):
         self.current_link = ""
         self.update_qr()
 
-    def get_link(self):
-        platform = self.platform_var.get()
-        fp = "randomized" if "Android" in platform else "chrome"
-        alias = "Unblocknet-Android" if "Android" in platform else "Unblocknet-iOS"
+    def get_link_and_info(self):
+        mode = self.mode_var.get()
         uuid_val = self.engine.settings.get("client_uuid") or "04756662-2f98-44ad-a53a-369d29118670"
-        return f"vless://{uuid_val}@193.233.138.42:443?security=reality&encryption=none&pbk=t0hTDOJOklZjxWHR_hJo2gg6nWUmSNA-gxFdERpTWRE&headerType=none&fp={fp}&spx=%2F&type=tcp&flow=xtls-rprx-vision&sni=speed.cloudflare.com&sid=dae45f#{alias}"
+        sub_url = self.engine.settings.get("sub_url") or "http://193.233.138.42:80/dlngedpbfjlw072y/83sm0dymf1qn5w9m"
+
+        if "Подписка" in mode:
+            link = sub_url
+            info = (
+                "⚡ Рекомендуется для Happ / Hiddify / Streisand:\n"
+                "Загружает сразу 2 независимых канала (443 и 2053) с авто-переключением.\n"
+                "В Happ нажмите «+» ➔ «Сканировать QR-код» (или добавьте ссылку из буфера)."
+            )
+            btn_txt = "📋 Скопировать ссылку подписки"
+        elif "443" in mode:
+            link = f"vless://{uuid_val}@193.233.138.42:443?security=reality&encryption=none&pbk=t0hTDOJOklZjxWHR_hJo2gg6nWUmSNA-gxFdERpTWRE&headerType=none&fp=chrome&spx=%2F&type=tcp&flow=xtls-rprx-vision&sni=speed.cloudflare.com&sid=dae45f#Unblocknet-Cloudflare-443"
+            info = (
+                "🌐 Основной прямой VLESS ключ (Порт 443 — Cloudflare).\n"
+                "Отпечаток: Chrome (100% защита от ТСПУ и DPI блокировок).\n"
+                "Подходит для любого VPN-клиента (Happ, V2Box, Hiddify, v2rayNG)."
+            )
+            btn_txt = "📋 Скопировать VLESS ключ (Порт 443)"
+        else:
+            link = f"vless://{uuid_val}@193.233.138.42:2053?security=reality&encryption=none&pbk=t0hTDOJOklZjxWHR_hJo2gg6nWUmSNA-gxFdERpTWRE&headerType=none&fp=chrome&spx=%2F&type=tcp&flow=xtls-rprx-vision&sni=azure.microsoft.com&sid=dae45f#Unblocknet-Azure-2053"
+            info = (
+                "🛡️ Резервный прямой VLESS ключ (Порт 2053 — Microsoft Azure).\n"
+                "Нестандартный защищенный порт. Обходит фильтрацию порта 443.\n"
+                "Используйте, если мобильный оператор временно глушит порт 443."
+            )
+            btn_txt = "📋 Скопировать VLESS ключ (Порт 2053)"
+
+        return link, info, btn_txt
 
     def update_qr(self, val=None):
-        self.current_link = self.get_link()
+        link, info, btn_txt = self.get_link_and_info()
+        self.current_link = link
+        self.info_label.configure(text=info)
+        self.copy_btn.configure(text=btn_txt)
+
         qr = qrcode.QRCode(box_size=5, border=1)
         qr.add_data(self.current_link)
         qr.make(fit=True)
@@ -208,12 +237,11 @@ class ShareQrDialog(ctk.CTkToplevel):
         ctk_img = ctk.CTkImage(light_image=img, dark_image=img, size=(200, 200))
         self.qr_label.configure(image=ctk_img)
         self.qr_label.image = ctk_img
-        self.copy_btn.configure(text="📋 Скопировать ключ VLESS")
 
     def copy_link(self):
         self.clipboard_clear()
         self.clipboard_append(self.current_link)
-        self.copy_btn.configure(text="✔ Ключ скопирован в буфер!")
+        self.copy_btn.configure(text="✔ Скопировано в буфер обмена!")
 
 
 # ---------------------------------------------------------------------------

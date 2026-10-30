@@ -477,12 +477,18 @@ def fetch_subscription_status(client_id=None, timeout=4):
     if res.get("status") == "ok":
         sub = res.get("subscription", {})
         sub["is_owner"] = res.get("is_owner", False)
+        settings = load_settings()
+        changed = False
+        if res.get("sub_url") and settings.get("sub_url") != res["sub_url"]:
+            settings["sub_url"] = res["sub_url"]
+            changed = True
         if res.get("node") and res["node"].get("uuid"):
-            settings = load_settings()
             new_uuid = res["node"]["uuid"]
             if settings.get("client_uuid") != new_uuid:
                 settings["client_uuid"] = new_uuid
-                save_settings(settings)
+                changed = True
+        if changed:
+            save_settings(settings)
         return sub, res.get("plans")
     return None, None
 
@@ -497,10 +503,16 @@ def activate_trial_period(client_id=None, timeout=5):
     """Activates 3-day free trial on the server."""
     res = _api_request("/api/trial", data={}, timeout=timeout)
     if res.get("status") == "ok":
-        # Update local node UUID if granted
+        # Update local node UUID and sub_url if granted
+        settings = load_settings()
+        changed = False
+        if res.get("sub_url") and settings.get("sub_url") != res["sub_url"]:
+            settings["sub_url"] = res["sub_url"]
+            changed = True
         if res.get("node") and res["node"].get("uuid"):
-            settings = load_settings()
             settings["client_uuid"] = res["node"]["uuid"]
+            changed = True
+        if changed:
             save_settings(settings)
         return True, res.get("message", "Пробный период активирован!")
     return False, res.get("message", "Не удалось активировать пробный период")
@@ -516,9 +528,15 @@ def activate_code(code, timeout=6):
     """Activates an 8-digit promo, 6-digit OTP, or developer email / master key."""
     res = _api_request("/api/activate", data={"code": code.strip()}, timeout=timeout)
     if res.get("status") == "ok":
+        settings = load_settings()
+        changed = False
+        if res.get("sub_url") and settings.get("sub_url") != res["sub_url"]:
+            settings["sub_url"] = res["sub_url"]
+            changed = True
         if res.get("node") and res["node"].get("uuid"):
-            settings = load_settings()
             settings["client_uuid"] = res["node"]["uuid"]
+            changed = True
+        if changed:
             save_settings(settings)
         return True, res.get("message", "Код успешно активирован!"), res
     return False, res.get("message", "Неверный код активации или промокод"), None
