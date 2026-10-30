@@ -2,7 +2,12 @@
 from PyInstaller.utils.hooks import collect_all
 
 datas = [('v2rayN/v2rayN-windows-64/bin/Xray/geosite.dat', '.'), ('v2rayN/v2rayN-windows-64/bin/Xray/geoip.dat', '.')]
-binaries = [('v2rayN/v2rayN-windows-64/bin/Xray/xray.exe', '.')]
+binaries = [
+    ('v2rayN/v2rayN-windows-64/bin/Xray/xray.exe', '.'),
+    ('C:/Python314/vcruntime140.dll', '.'),
+    ('C:/Python314/vcruntime140_1.dll', '.'),
+    ('C:/Windows/System32/msvcp140.dll', '.')
+]
 hiddenimports = ['vpn_updater', 'vpn_core', 'vpn_speedtest']
 tmp_ret = collect_all('customtkinter')
 datas += tmp_ret[0]; binaries += tmp_ret[1]; hiddenimports += tmp_ret[2]

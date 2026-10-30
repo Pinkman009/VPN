@@ -13,7 +13,7 @@ import urllib.request
 import subprocess
 import threading
 
-CURRENT_VERSION = "2.6.5"
+CURRENT_VERSION = "2.6.6"
 GITHUB_REPO = "Pinkman009/VPN"
 RELEASES_API = f"https://api.github.com/repos/{GITHUB_REPO}/releases/latest"
 
@@ -161,7 +161,7 @@ def download_update(download_url, progress_callback=None, cancel_event=None):
         req = urllib.request.Request(download_url, headers=headers)
         opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
 
-        with opener.open(req, timeout=30) as resp:
+        with opener.open(req, timeout=60) as resp:
             total_size = int(resp.headers.get("Content-Length", 0))
             downloaded = 0
             block_size = 65536
@@ -182,14 +182,27 @@ def download_update(download_url, progress_callback=None, cancel_event=None):
                         pct = int((downloaded / total_size) * 100) if total_size > 0 else 0
                         progress_callback(downloaded, total_size, pct)
 
-        # Validate downloaded executable
-        if not os.path.exists(temp_path) or os.path.getsize(temp_path) < 1024 * 100:
-            return False, "Downloaded file is corrupted or too small."
+        # Validate download completeness against Content-Length
+        if total_size > 0 and downloaded < total_size:
+            log_updater(f"Incomplete download: {downloaded}/{total_size} bytes received.")
+            return False, f"Загрузка прервана: получено {downloaded} из {total_size} байт."
 
+        # Validate downloaded executable size (Unblocknet bundle is ~40MB+)
+        if not os.path.exists(temp_path) or os.path.getsize(temp_path) < 25 * 1024 * 1024:
+            return False, "Файл обновления неполный или поврежден при передаче (размер менее 25 МБ)."
+
+        # Validate Windows PE header and PyInstaller CArchive integrity
         with open(temp_path, "rb") as f:
             header = f.read(2)
             if header != b'MZ':
-                return False, "Downloaded file is not a valid Windows executable (PE header missing)."
+                return False, "Файл не является корректным исполняемым файлом Windows (отсутствует PE/MZ)."
+            
+            # Check PyInstaller magic trailer in last 256 bytes
+            f.seek(-256, os.SEEK_END)
+            tail = f.read()
+            if b'MEI\x0c\x0b\n\x0b\x0e' not in tail:
+                log_updater("PyInstaller magic cookie missing in download trailer! File is truncated.")
+                return False, "Архив обновления поврежден (нарушена структура PyInstaller CArchive)."
 
         if os.path.exists(dest_path):
             try:
@@ -198,7 +211,7 @@ def download_update(download_url, progress_callback=None, cancel_event=None):
                 pass
 
         shutil.move(temp_path, dest_path)
-        log_updater(f"Download complete: {dest_path} ({os.path.getsize(dest_path)} bytes)")
+        log_updater(f"Download verified and complete: {dest_path} ({os.path.getsize(dest_path)} bytes)")
         return True, dest_path
 
     except Exception as e:
@@ -209,6 +222,7 @@ def download_update(download_url, progress_callback=None, cancel_event=None):
 def install_update_and_restart(new_exe_path):
     """
     Spawns detached Windows batch script to replace running executable and relaunch it.
+    Includes process tree termination, backup creation, and rollback safety.
     """
     if getattr(sys, 'frozen', False):
         running_exe = sys.executable
@@ -230,8 +244,15 @@ echo.
 echo Ожидание завершения предыдущего процесса (PID {pid})...
 timeout /t 2 /nobreak >nul
 
-taskkill /F /PID {pid} >nul 2>&1
+:: Terminate full process tree and any orphaned xray instances
+taskkill /F /T /PID {pid} >nul 2>&1
+taskkill /F /IM xray.exe >nul 2>&1
 timeout /t 1 /nobreak >nul
+
+:: Create backup of current executable
+if exist "{running_exe}" (
+    copy /Y "{running_exe}" "{running_exe}.bak" >nul 2>&1
+)
 
 echo Замена исполняемого файла...
 set RETRY=0
@@ -239,12 +260,16 @@ set RETRY=0
 copy /Y "{new_exe_path}" "{running_exe}" >nul
 if errorlevel 1 (
     set /a RETRY+=1
-    if %RETRY% leq 6 (
+    if %RETRY% leq 8 (
         echo Файл занят, повторная попытка через 1 сек...
         timeout /t 1 /nobreak >nul
         goto RETRY_COPY
     ) else (
         echo Ошибка: не удалось обновить файл {running_exe}.
+        if exist "{running_exe}.bak" (
+            echo Восстановление предыдущей версии...
+            copy /Y "{running_exe}.bak" "{running_exe}" >nul 2>&1
+        )
         pause
         exit /b 1
     )
@@ -254,8 +279,9 @@ echo Обновление успешно установлено!
 echo Запуск новой версии Unblocknet...
 start "" "{running_exe}"
 
-timeout /t 2 /nobreak >nul
+timeout /t 3 /nobreak >nul
 del "{new_exe_path}" >nul 2>&1
+if exist "{running_exe}.bak" del "{running_exe}.bak" >nul 2>&1
 (goto) 2>nul & del "%~f0"
 """
 
