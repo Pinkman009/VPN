@@ -376,6 +376,7 @@ class TeletokApp(ctk.CTk):
         self.selected_plan_id = ctk.StringVar(value="1y")
         self.selected_devices = 3
         self.plan_desc_labels = {}
+        self.server_plans = {}
         self.billing_polling = False
         self.current_sub = None
         self.latest_update_info = None
@@ -1021,9 +1022,15 @@ class TeletokApp(ctk.CTk):
             devices = self.selected_devices
         devices = max(3, min(10, devices))
         base_prices = {"1m": 149, "3m": 390, "6m": 690, "1y": 1190}
-        extra_rates = {"1m": 35, "3m": 90, "6m": 150, "1y": 240}
-        base = base_prices.get(plan_id, 1190)
-        extra = max(0, devices - 3) * extra_rates.get(plan_id, 35)
+        extra_rates = {"1m": 63, "3m": 90, "6m": 150, "1y": 240}
+        if hasattr(self, "server_plans") and self.server_plans and plan_id in self.server_plans:
+            pinfo = self.server_plans[plan_id]
+            base = pinfo.get("price", base_prices.get(plan_id, 1190))
+            extra_rate = pinfo.get("extra_rate", pinfo.get("extra_device_rate", extra_rates.get(plan_id, 35)))
+        else:
+            base = base_prices.get(plan_id, 1190)
+            extra_rate = extra_rates.get(plan_id, 35)
+        extra = max(0, devices - 3) * extra_rate
         return base + extra
 
     def _change_devices(self, delta):
@@ -1456,11 +1463,15 @@ class TeletokApp(ctk.CTk):
         threading.Thread(target=self._check_subscription_bg, daemon=True).start()
 
     def _check_subscription_bg(self):
-        sub, _, ref = fetch_subscription_status()
-        self.after(0, self._render_subscription, sub, ref)
+        sub, plans, ref = fetch_subscription_status()
+        self.after(0, self._render_subscription, sub, plans, ref)
 
-    def _render_subscription(self, sub, ref=None):
+    def _render_subscription(self, sub, plans=None, ref=None):
         self.current_sub = sub
+        if plans:
+            self.server_plans = plans
+            self.update_plan_card_labels()
+            self.update_billing_button()
         if ref:
             self._render_referral(ref)
         if not sub:
