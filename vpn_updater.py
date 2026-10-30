@@ -13,7 +13,7 @@ import urllib.request
 import subprocess
 import threading
 
-CURRENT_VERSION = "2.7.0"
+CURRENT_VERSION = "2.8.0"
 GITHUB_REPO = "Pinkman009/VPN"
 RELEASES_API = f"https://api.github.com/repos/{GITHUB_REPO}/releases/latest"
 
@@ -238,7 +238,7 @@ def install_update_and_restart(new_exe_path):
 chcp 65001 >nul
 title Обновление Unblocknet...
 echo ===================================================
-echo     Обновление Unblocknet до версии 2.7.0...
+echo     Обновление Unblocknet до версии {CURRENT_VERSION}...
 echo ===================================================
 echo.
 echo Ожидание завершения предыдущего процесса...
@@ -271,9 +271,19 @@ if errorlevel 1 (
     if exist "{running_exe}.old" move /Y "{running_exe}.old" "{running_exe}" >nul 2>&1
     pause
     exit /b 1
-) else (
-    if exist "{running_exe}.old" del /F /Q "{running_exe}.old" >nul 2>&1
 )
+
+:: Validate binary size before starting to prevent loading corrupted/truncated files
+for %%F in ("{running_exe}") do set SIZENEW=%%~zF
+if not defined SIZENEW set SIZENEW=0
+if %SIZENEW% lss 25000000 (
+    echo Ошибка: файл обновления поврежден (размер %SIZENEW% байт). Откат к предыдущей версии...
+    if exist "{running_exe}.old" move /Y "{running_exe}.old" "{running_exe}" >nul 2>&1
+    pause
+    exit /b 1
+)
+
+if exist "{running_exe}.old" del /F /Q "{running_exe}.old" >nul 2>&1
 
 echo Обновление успешно установлено!
 echo Запуск новой версии Unblocknet...

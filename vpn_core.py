@@ -492,9 +492,9 @@ def fetch_subscription_status(client_id=None, timeout=4):
         return sub, res.get("plans"), res.get("referral")
     return None, None, None
 
-def create_payment_order(plan_id, client_id=None, timeout=5):
-    """Requests a new YooMoney payment order and URL from VPS API."""
-    res = _api_request("/api/payment/create", data={"plan_id": plan_id}, timeout=timeout)
+def create_payment_order(plan_id, devices=3, client_id=None, timeout=5):
+    """Requests a new YooMoney payment order and URL from VPS API with custom device count."""
+    res = _api_request("/api/payment/create", data={"plan_id": plan_id, "devices": devices}, timeout=timeout)
     if res.get("status") == "ok":
         return True, res.get("payment_url"), res.get("order_id"), res.get("plan")
     return False, res.get("message", "Ошибка создания заказа"), None, None
@@ -793,13 +793,26 @@ class VpnEngine:
             active_uuid = "04756662-2f98-44ad-a53a-369d29118670"
 
         channels = [
-            ("p-443-ff", 443, "speed.cloudflare.com", "firefox"),
-            ("p-2053-sf", 2053, "azure.microsoft.com", "safari"),
-            ("p-2053-ff", 2053, "azure.microsoft.com", "firefox"),
-            ("p-443-sf", 443, "speed.cloudflare.com", "safari"),
+            ("p-2053-sf", 2053, "azure.microsoft.com", "safari", False),
+            ("p-2053-ff", 2053, "azure.microsoft.com", "firefox", False),
+            ("p-443-frag-sf", 443, "azure.microsoft.com", "safari", True),
+            ("p-443-frag-ff", 443, "azure.microsoft.com", "firefox", True),
         ]
         proxy_outbounds = []
-        for tag, port, sni, fp in channels:
+        for tag, port, sni, fp, use_frag in channels:
+            st_settings = {
+                "network": "tcp",
+                "security": "reality",
+                "realitySettings": {
+                    "serverName": sni,
+                    "fingerprint": fp,
+                    "publicKey": node["pbk"],
+                    "shortId": node["sid"],
+                    "spiderX": "/"
+                }
+            }
+            if use_frag:
+                st_settings["sockopt"] = {"dialerProxy": "fragment-out"}
             proxy_outbounds.append({
                 "tag": tag,
                 "protocol": "vless",
@@ -808,17 +821,7 @@ class VpnEngine:
                     "port": port,
                     "users": [{"id": active_uuid, "encryption": "none", "flow": node["flow"]}]
                 }]},
-                "streamSettings": {
-                    "network": "tcp",
-                    "security": "reality",
-                    "realitySettings": {
-                        "serverName": sni,
-                        "fingerprint": fp,
-                        "publicKey": node["pbk"],
-                        "shortId": node["sid"],
-                        "spiderX": "/"
-                    }
-                }
+                "streamSettings": st_settings
             })
 
         adblock_list = ["geosite:category-ads-all"]
@@ -917,6 +920,18 @@ class VpnEngine:
             },
             "outbounds": proxy_outbounds + [
                 {
+                    "tag": "fragment-out",
+                    "protocol": "freedom",
+                    "settings": {
+                        "domainStrategy": "UseIPv4",
+                        "fragment": {
+                            "packets": "1-3",
+                            "length": "100-200",
+                            "interval": "10-20"
+                        }
+                    }
+                },
+                {
                     "tag": "direct",
                     "protocol": "freedom",
                     "settings": {
@@ -936,7 +951,7 @@ class VpnEngine:
                         "tag": "auto",
                         "selector": ["p-"],
                         "strategy": {"type": "leastPing"},
-                        "fallbackTag": "p-443-ff"
+                        "fallbackTag": "p-2053-sf"
                     }
                 ]
             }

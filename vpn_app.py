@@ -374,6 +374,8 @@ class TeletokApp(ctk.CTk):
 
         # Plan selection state
         self.selected_plan_id = ctk.StringVar(value="1y")
+        self.selected_devices = 3
+        self.plan_desc_labels = {}
         self.billing_polling = False
         self.current_sub = None
         self.latest_update_info = None
@@ -665,25 +667,86 @@ class TeletokApp(ctk.CTk):
         )
         self.sub_details.pack(anchor="w", padx=16, pady=(0, 8))
 
+        # Device Selector Card
+        self.device_card = ctk.CTkFrame(self.page_billing, fg_color=COLOR_SURFACE, corner_radius=12, border_width=1, border_color=COLOR_BORDER)
+        self.device_card.pack(fill="x", pady=(0, 10), ipady=6)
+
+        dev_top = ctk.CTkFrame(self.device_card, fg_color="transparent")
+        dev_top.pack(fill="x", padx=16, pady=(8, 2))
+
+        dev_title = ctk.CTkLabel(
+            dev_top,
+            text="📱 Количество устройств:",
+            font=ctk.CTkFont(family="Segoe UI", size=13, weight="bold"),
+            text_color=COLOR_TEXT_WHITE
+        )
+        dev_title.pack(side="left")
+
+        dev_counter_box = ctk.CTkFrame(dev_top, fg_color="#10111a", corner_radius=8, border_width=1, border_color=COLOR_BORDER)
+        dev_counter_box.pack(side="right")
+
+        self.btn_dev_minus = ctk.CTkButton(
+            dev_counter_box,
+            text="—",
+            font=ctk.CTkFont(family="Segoe UI", size=14, weight="bold"),
+            width=32,
+            height=30,
+            fg_color="transparent",
+            hover_color="#222538",
+            command=lambda: self._change_devices(-1)
+        )
+        self.btn_dev_minus.pack(side="left")
+
+        self.device_count_lbl = ctk.CTkLabel(
+            dev_counter_box,
+            text="3 устройства",
+            font=ctk.CTkFont(family="Segoe UI", size=12, weight="bold"),
+            text_color=COLOR_PRIMARY,
+            width=96
+        )
+        self.device_count_lbl.pack(side="left", padx=4)
+
+        self.btn_dev_plus = ctk.CTkButton(
+            dev_counter_box,
+            text="+",
+            font=ctk.CTkFont(family="Segoe UI", size=14, weight="bold"),
+            width=32,
+            height=30,
+            fg_color="transparent",
+            hover_color="#222538",
+            command=lambda: self._change_devices(+1)
+        )
+        self.btn_dev_plus.pack(side="left")
+
+        dev_hint = ctk.CTkLabel(
+            self.device_card,
+            text="Базовый тариф включает 3 устройства. Дополнительные подключаются со скидкой (от 20 до 35 ₽/мес за устр., до 10 устройств).",
+            font=ctk.CTkFont(family="Segoe UI", size=11),
+            text_color=COLOR_TEXT_MUTED,
+            wraplength=440,
+            justify="left"
+        )
+        dev_hint.pack(anchor="w", padx=16, pady=(0, 6))
+
         # Plans Header
         plans_head = ctk.CTkLabel(
             self.page_billing,
-            text="Выберите тариф продления:",
+            text="Выберите период подписки:",
             font=ctk.CTkFont(family="Segoe UI", size=14, weight="bold"),
             text_color=COLOR_TEXT_WHITE
         )
         plans_head.pack(anchor="w", padx=4, pady=(2, 6))
 
         self.plan_definitions = [
-            ("1m", "1 месяц", "149 ₽", "Базовый доступ на 30 дней • До 3 устройств", None),
-            ("3m", "3 месяца", "390 ₽", "130 ₽/мес • Скидка 13% • До 3 устройств", "-13%"),
-            ("6m", "6 месяцев", "690 ₽", "115 ₽/мес • Скидка 23% • До 3 устройств", "-23%"),
-            ("1y", "1 год (Базовый)", "1 190 ₽", "99 ₽/мес • Скидка 33% • Хит продаж 🔥 • До 3 устройств", "ХИТ! -33%"),
-            ("family_1y", "1 год (Семейный 👨‍👩‍👧‍👦)", "1 990 ₽", "165 ₽/мес • До 6 устройств одновременно для всей семьи!", "СЕМЬЯ (6 устр.)"),
+            ("1m", "1 месяц", None),
+            ("3m", "3 месяца", "-13%"),
+            ("6m", "6 месяцев", "-23%"),
+            ("1y", "1 год (Максимум выгоды)", "ХИТ! -33%"),
         ]
 
         self.plan_radios = {}
-        for pid, name, price, desc, badge in self.plan_definitions:
+        self.plan_desc_labels = {}
+        for pid, name, badge in self.plan_definitions:
             card = ctk.CTkFrame(self.page_billing, fg_color=COLOR_SURFACE, corner_radius=10, border_width=1, border_color=COLOR_BORDER)
             card.pack(fill="x", pady=4, ipady=4)
 
@@ -692,7 +755,7 @@ class TeletokApp(ctk.CTk):
 
             rb = ctk.CTkRadioButton(
                 top_line,
-                text=f"{name} — {price}",
+                text=f"{name}",
                 value=pid,
                 variable=self.selected_plan_id,
                 font=ctk.CTkFont(family="Segoe UI", size=13, weight="bold"),
@@ -704,12 +767,11 @@ class TeletokApp(ctk.CTk):
             self.plan_radios[pid] = rb
 
             if badge:
-                is_fam = "СЕМЬЯ" in badge
                 badge_lbl = ctk.CTkLabel(
                     top_line,
                     text=badge,
                     font=ctk.CTkFont(family="Segoe UI", size=11, weight="bold"),
-                    fg_color=COLOR_PRIMARY if is_fam else COLOR_ACCENT_ORANGE,
+                    fg_color=COLOR_ACCENT_ORANGE,
                     text_color="white",
                     corner_radius=6,
                     padx=7,
@@ -719,17 +781,20 @@ class TeletokApp(ctk.CTk):
 
             desc_lbl = ctk.CTkLabel(
                 card,
-                text=f"    {desc}",
+                text="    Загрузка расчетов...",
                 font=ctk.CTkFont(family="Segoe UI", size=11),
                 text_color=COLOR_TEXT_MUTED
             )
             desc_lbl.pack(anchor="w", padx=14, pady=(0, 4))
+            self.plan_desc_labels[pid] = desc_lbl
 
             def _make_selector(val):
                 return lambda e: self._on_plan_card_clicked(val)
             card.bind("<Button-1>", _make_selector(pid))
             top_line.bind("<Button-1>", _make_selector(pid))
             desc_lbl.bind("<Button-1>", _make_selector(pid))
+
+        self.update_plan_card_labels()
 
         # Trial Period Button
         self.trial_btn = ctk.CTkButton(
@@ -943,21 +1008,82 @@ class TeletokApp(ctk.CTk):
 
         self.update_billing_button()
 
+    @staticmethod
+    def _format_device_count(n):
+        if n % 10 == 1 and n % 100 != 11:
+            return f"{n} устройство"
+        elif 2 <= n % 10 <= 4 and (n % 100 < 10 or n % 100 >= 20):
+            return f"{n} устройства"
+        return f"{n} устройств"
+
+    def _calculate_plan_price(self, plan_id, devices=None):
+        if devices is None:
+            devices = self.selected_devices
+        devices = max(3, min(10, devices))
+        base_prices = {"1m": 149, "3m": 390, "6m": 690, "1y": 1190}
+        extra_rates = {"1m": 35, "3m": 90, "6m": 150, "1y": 240}
+        base = base_prices.get(plan_id, 1190)
+        extra = max(0, devices - 3) * extra_rates.get(plan_id, 35)
+        return base + extra
+
+    def _change_devices(self, delta):
+        new_val = max(3, min(10, self.selected_devices + delta))
+        if new_val == self.selected_devices:
+            return
+        self.selected_devices = new_val
+        self.device_count_lbl.configure(text=self._format_device_count(self.selected_devices))
+        if hasattr(self, "btn_dev_minus"):
+            self.btn_dev_minus.configure(state="disabled" if self.selected_devices <= 3 else "normal")
+        if hasattr(self, "btn_dev_plus"):
+            self.btn_dev_plus.configure(state="disabled" if self.selected_devices >= 10 else "normal")
+        self.update_plan_card_labels()
+        self.update_billing_button()
+
+    def update_plan_card_labels(self):
+        dev_str = self._format_device_count(self.selected_devices)
+        plan_names = {
+            "1m": "1 месяц",
+            "3m": "3 месяца",
+            "6m": "6 месяцев",
+            "1y": "1 год (Максимум выгоды)",
+        }
+        for pid, rb in self.plan_radios.items():
+            price = self._calculate_plan_price(pid, self.selected_devices)
+            price_fmt = f"{price:,} ₽".replace(",", " ")
+            name = plan_names.get(pid, pid)
+            rb.configure(text=f"{name} — {price_fmt}")
+
+            desc_lbl = self.plan_desc_labels.get(pid)
+            if desc_lbl:
+                if pid == "1m":
+                    per_dev = round(price / self.selected_devices)
+                    desc_lbl.configure(text=f"    {price_fmt} • {dev_str} (~{per_dev} ₽/устр)")
+                elif pid == "3m":
+                    per_mo = round(price / 3)
+                    per_dev = round(per_mo / self.selected_devices)
+                    desc_lbl.configure(text=f"    {per_mo} ₽/мес • Скидка 13% • {dev_str} (~{per_dev} ₽/устр/мес)")
+                elif pid == "6m":
+                    per_mo = round(price / 6)
+                    per_dev = round(per_mo / self.selected_devices)
+                    desc_lbl.configure(text=f"    {per_mo} ₽/мес • Скидка 23% • {dev_str} (~{per_dev} ₽/устр/мес)")
+                elif pid == "1y":
+                    per_mo = round(price / 12)
+                    per_dev = round(per_mo / self.selected_devices)
+                    desc_lbl.configure(text=f"    {per_mo} ₽/мес • Скидка 33% • Хит продаж 🔥 • {dev_str} (~{per_dev} ₽/устр/мес)")
+
     def _on_plan_card_clicked(self, plan_id):
         self.selected_plan_id.set(plan_id)
         self.update_billing_button()
 
     def update_billing_button(self):
-        prices = {
-            "1m": "149 ₽",
-            "3m": "390 ₽",
-            "6m": "690 ₽",
-            "1y": "1 190 ₽",
-            "family_1y": "1 990 ₽"
-        }
         pid = self.selected_plan_id.get()
-        p = prices.get(pid, "1 190 ₽")
-        self.pay_btn.configure(text=f"Оплатить {p}")
+        if pid not in ["1m", "3m", "6m", "1y"]:
+            pid = "1y"
+            self.selected_plan_id.set("1y")
+        price = self._calculate_plan_price(pid, self.selected_devices)
+        price_fmt = f"{price:,} ₽".replace(",", " ")
+        dev_str = self._format_device_count(self.selected_devices)
+        self.pay_btn.configure(text=f"Оплатить {price_fmt} ({dev_str})")
 
     # -----------------------------------------------------------------------
     # TAB 3: SETTINGS
@@ -1486,7 +1612,7 @@ class TeletokApp(ctk.CTk):
         self.billing_status_lbl.configure(text="Формируем защищенную ссылку на оплату...", text_color=COLOR_PRIMARY)
 
         def _worker():
-            ok, pay_url, order_id, plan_info = create_payment_order(plan_id)
+            ok, pay_url, order_id, plan_info = create_payment_order(plan_id, devices=self.selected_devices)
             self.after(0, self._on_payment_url_ready, ok, pay_url, order_id, plan_info)
         threading.Thread(target=_worker, daemon=True).start()
 
