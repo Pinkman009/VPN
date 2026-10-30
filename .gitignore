@@ -7,8 +7,10 @@ __pycache__/
 build/
 dist/
 *.spec.bak
+Unblocknet_debug.spec
 Unblocknet.exe
 *.exe
+*.old
 
 # Large archives & heavy external packages (binaries belong in GitHub Releases)
 *.zip

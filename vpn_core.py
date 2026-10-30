@@ -472,7 +472,7 @@ def fetch_server_config(timeout=3):
     return None
 
 def fetch_subscription_status(client_id=None, timeout=4):
-    """Fetches user profile, active subscription and pricing plans."""
+    """Fetches user profile, active subscription, pricing plans, and referral info."""
     res = sync_identity()
     if res.get("status") == "ok":
         sub = res.get("subscription", {})
@@ -489,8 +489,8 @@ def fetch_subscription_status(client_id=None, timeout=4):
                 changed = True
         if changed:
             save_settings(settings)
-        return sub, res.get("plans")
-    return None, None
+        return sub, res.get("plans"), res.get("referral")
+    return None, None, None
 
 def create_payment_order(plan_id, client_id=None, timeout=5):
     """Requests a new YooMoney payment order and URL from VPS API."""

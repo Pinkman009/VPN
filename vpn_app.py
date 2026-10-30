@@ -767,7 +767,179 @@ class TeletokApp(ctk.CTk):
             text_color=COLOR_TEXT_MUTED,
             wraplength=440
         )
-        self.billing_status_lbl.pack(pady=(2, 10))
+        self.billing_status_lbl.pack(pady=(2, 8))
+
+        # Referral & Promocode Card
+        self.referral_card = ctk.CTkFrame(self.page_billing, fg_color=COLOR_SURFACE, corner_radius=12, border_width=1, border_color=COLOR_BORDER)
+        self.referral_card.pack(fill="x", pady=(4, 12), ipady=6)
+
+        ref_head = ctk.CTkLabel(
+            self.referral_card,
+            text="🎁 Реферальная программа — Бонус +14 дней",
+            font=ctk.CTkFont(family="Segoe UI", size=14, weight="bold"),
+            text_color=COLOR_TEXT_WHITE
+        )
+        ref_head.pack(anchor="w", padx=16, pady=(10, 2))
+
+        ref_desc = ctk.CTkLabel(
+            self.referral_card,
+            text="Поделитесь Unblocknet с другом: друг получит +7 дней бонуса (10 дней с триалом), а вам начислится +14 дней после его первой оплаты!",
+            font=ctk.CTkFont(family="Segoe UI", size=11),
+            text_color=COLOR_TEXT_MUTED,
+            wraplength=440,
+            justify="left"
+        )
+        ref_desc.pack(anchor="w", padx=16, pady=(0, 8))
+
+        # Personal Code Sub-section
+        my_code_lbl = ctk.CTkLabel(
+            self.referral_card,
+            text="Ваш персональный промокод для друзей:",
+            font=ctk.CTkFont(family="Segoe UI", size=12, weight="bold"),
+            text_color=COLOR_PRIMARY
+        )
+        my_code_lbl.pack(anchor="w", padx=16, pady=(4, 2))
+
+        my_code_row = ctk.CTkFrame(self.referral_card, fg_color="transparent")
+        my_code_row.pack(fill="x", padx=16, pady=(2, 8))
+
+        self.my_ref_code_var = ctk.StringVar(value="Загрузка кода...")
+        self.my_ref_code_entry = ctk.CTkEntry(
+            my_code_row,
+            textvariable=self.my_ref_code_var,
+            font=ctk.CTkFont(family="Consolas", size=13, weight="bold"),
+            height=36,
+            fg_color="#10111a",
+            border_color=COLOR_BORDER,
+            justify="center",
+            state="readonly"
+        )
+        self.my_ref_code_entry.pack(side="left", fill="x", expand=True, padx=(0, 6))
+
+        self.copy_ref_btn = ctk.CTkButton(
+            my_code_row,
+            text="📋 Скопировать",
+            width=115,
+            height=36,
+            font=ctk.CTkFont(family="Segoe UI", size=11, weight="bold"),
+            fg_color="#27293d",
+            hover_color="#363952",
+            command=self.copy_referral_code
+        )
+        self.copy_ref_btn.pack(side="left", padx=(0, 4))
+
+        self.share_ref_btn = ctk.CTkButton(
+            my_code_row,
+            text="📤 Поделиться",
+            width=105,
+            height=36,
+            font=ctk.CTkFont(family="Segoe UI", size=11, weight="bold"),
+            fg_color=COLOR_PRIMARY,
+            hover_color=COLOR_PRIMARY_HOVER,
+            command=self.share_referral_code
+        )
+        self.share_ref_btn.pack(side="left")
+
+        # Divider
+        div = ctk.CTkFrame(self.referral_card, fg_color=COLOR_BORDER, height=1)
+        div.pack(fill="x", padx=16, pady=(4, 8))
+
+        # Enter Promo Code Sub-section
+        enter_code_lbl = ctk.CTkLabel(
+            self.referral_card,
+            text="Есть промокод от друга или код активации?",
+            font=ctk.CTkFont(family="Segoe UI", size=12, weight="bold"),
+            text_color=COLOR_TEXT_WHITE
+        )
+        enter_code_lbl.pack(anchor="w", padx=16, pady=(2, 2))
+
+        code_row = ctk.CTkFrame(self.referral_card, fg_color="transparent")
+        code_row.pack(fill="x", padx=16, pady=(2, 4))
+
+        self.code_entry = ctk.CTkEntry(
+            code_row,
+            placeholder_text="Введите промокод (например: UB-XXXX-YYYY-ZZZZ)",
+            font=ctk.CTkFont(family="Segoe UI", size=12),
+            height=34,
+            fg_color="#1d1e30",
+            border_color=COLOR_BORDER
+        )
+        self.code_entry.pack(side="left", fill="x", expand=True, padx=(0, 8))
+
+        self.activate_code_btn = ctk.CTkButton(
+            code_row,
+            text="Применить",
+            width=110,
+            height=34,
+            font=ctk.CTkFont(family="Segoe UI", size=11, weight="bold"),
+            fg_color="#183628",
+            hover_color="#1e4634",
+            border_width=1,
+            border_color=COLOR_CONNECTED,
+            command=self.activate_code_action
+        )
+        self.activate_code_btn.pack(side="right")
+
+        self.promo_status_lbl = ctk.CTkLabel(
+            self.referral_card,
+            text="",
+            font=ctk.CTkFont(family="Segoe UI", size=11),
+            text_color=COLOR_TEXT_MUTED
+        )
+        self.promo_status_lbl.pack(anchor="w", padx=16, pady=(0, 6))
+
+        # Statistics & History Sub-section
+        stats_frame = ctk.CTkFrame(self.referral_card, fg_color="#121320", corner_radius=8)
+        stats_frame.pack(fill="x", padx=16, pady=(4, 6), ipady=4)
+
+        stats_head = ctk.CTkLabel(
+            stats_frame,
+            text="📊 Ваша статистика приглашений:",
+            font=ctk.CTkFont(family="Segoe UI", size=11, weight="bold"),
+            text_color=COLOR_TEXT_WHITE
+        )
+        stats_head.pack(anchor="w", padx=10, pady=(4, 2))
+
+        badges_row = ctk.CTkFrame(stats_frame, fg_color="transparent")
+        badges_row.pack(fill="x", padx=10, pady=(2, 4))
+
+        self.ref_stat_invited = ctk.CTkLabel(
+            badges_row,
+            text="👥 Приглашено: 0",
+            font=ctk.CTkFont(family="Segoe UI", size=11),
+            fg_color="#1e2035",
+            corner_radius=6,
+            padx=8,
+            pady=3
+        )
+        self.ref_stat_invited.pack(side="left", padx=(0, 6))
+
+        self.ref_stat_paid = ctk.CTkLabel(
+            badges_row,
+            text="💳 Оплатили: 0",
+            font=ctk.CTkFont(family="Segoe UI", size=11),
+            fg_color="#1e2035",
+            corner_radius=6,
+            padx=8,
+            pady=3
+        )
+        self.ref_stat_paid.pack(side="left", padx=(0, 6))
+
+        self.ref_stat_bonus = ctk.CTkLabel(
+            badges_row,
+            text="⚡ Начислено: +0 дн.",
+            font=ctk.CTkFont(family="Segoe UI", size=11, weight="bold"),
+            fg_color="#183628",
+            text_color=COLOR_CONNECTED,
+            corner_radius=6,
+            padx=8,
+            pady=3
+        )
+        self.ref_stat_bonus.pack(side="left")
+
+        # History list container
+        self.ref_history_frame = ctk.CTkFrame(self.referral_card, fg_color="transparent")
+        self.ref_history_frame.pack(fill="x", padx=16, pady=(2, 6))
 
         self.update_billing_button()
 
@@ -941,61 +1113,6 @@ class TeletokApp(ctk.CTk):
             command=self.send_error_report_action
         )
         self.report_issue_btn.pack(fill="x", padx=16, pady=(0, 10))
-
-        # Promo & Activation Card
-        self.promo_card = ctk.CTkFrame(self.page_settings, fg_color=COLOR_SURFACE, corner_radius=12, border_width=1, border_color=COLOR_BORDER)
-        self.promo_card.pack(fill="x", pady=(0, 10), ipady=6)
-
-        promo_head = ctk.CTkLabel(
-            self.promo_card,
-            text="🎟️ Промокод или код активации:",
-            font=ctk.CTkFont(family="Segoe UI", size=13, weight="bold"),
-            text_color=COLOR_TEXT_WHITE
-        )
-        promo_head.pack(anchor="w", padx=14, pady=(8, 2))
-
-        promo_desc = ctk.CTkLabel(
-            self.promo_card,
-            text="Если у вас есть подарочный промокод или код продления подписки:",
-            font=ctk.CTkFont(family="Segoe UI", size=11),
-            text_color=COLOR_TEXT_MUTED
-        )
-        promo_desc.pack(anchor="w", padx=14, pady=(0, 6))
-
-        code_row = ctk.CTkFrame(self.promo_card, fg_color="transparent")
-        code_row.pack(fill="x", padx=14, pady=(2, 6))
-
-        self.code_entry = ctk.CTkEntry(
-            code_row,
-            placeholder_text="Введите промокод",
-            font=ctk.CTkFont(family="Segoe UI", size=12),
-            height=34,
-            fg_color="#1d1e30",
-            border_color=COLOR_BORDER
-        )
-        self.code_entry.pack(side="left", fill="x", expand=True, padx=(0, 8))
-
-        self.activate_code_btn = ctk.CTkButton(
-            code_row,
-            text="Применить",
-            width=110,
-            height=34,
-            font=ctk.CTkFont(family="Segoe UI", size=11, weight="bold"),
-            fg_color="#183628",
-            hover_color="#1e4634",
-            border_width=1,
-            border_color=COLOR_CONNECTED,
-            command=self.activate_code_action
-        )
-        self.activate_code_btn.pack(side="right")
-
-        self.promo_status_lbl = ctk.CTkLabel(
-            self.promo_card,
-            text="",
-            font=ctk.CTkFont(family="Segoe UI", size=11),
-            text_color=COLOR_TEXT_MUTED
-        )
-        self.promo_status_lbl.pack(anchor="w", padx=14, pady=(0, 4))
 
         # App Update Card (Releases)
         self.update_card = ctk.CTkFrame(self.page_settings, fg_color=COLOR_SURFACE, corner_radius=12, border_width=1, border_color=COLOR_BORDER)
@@ -1213,11 +1330,13 @@ class TeletokApp(ctk.CTk):
         threading.Thread(target=self._check_subscription_bg, daemon=True).start()
 
     def _check_subscription_bg(self):
-        sub, _ = fetch_subscription_status()
-        self.after(0, self._render_subscription, sub)
+        sub, _, ref = fetch_subscription_status()
+        self.after(0, self._render_subscription, sub, ref)
 
-    def _render_subscription(self, sub):
+    def _render_subscription(self, sub, ref=None):
         self.current_sub = sub
+        if ref:
+            self._render_referral(ref)
         if not sub:
             self.sub_header.configure(text="⚠️ Статус подписки: Ошибка соединения", text_color="#e74c3c")
             self.sub_details.configure(text="Проверьте подключение к Интернету или обновите статус.")
@@ -1271,6 +1390,50 @@ class TeletokApp(ctk.CTk):
             self.trial_btn.configure(state="normal", text="🎁 Активировать 3 дня бесплатно (Тестовый период)")
             self.pay_btn.configure(state="normal")
             self.update_billing_button()
+
+    def copy_referral_code(self):
+        code = self.my_ref_code_var.get().strip()
+        if code and not code.startswith("Загрузка"):
+            self.clipboard_clear()
+            self.clipboard_append(code)
+            self.promo_status_lbl.configure(text=f"📋 Промокод {code} скопирован в буфер обмена!", text_color=COLOR_CONNECTED)
+
+    def share_referral_code(self):
+        code = self.my_ref_code_var.get().strip()
+        if code and not code.startswith("Загрузка"):
+            msg = f"Попробуй быстрый VPN без блокировок Unblocknet! Скачай тут: https://github.com/Pinkman009/VPN/releases и введи мой промокод {code} во вкладке «Тарифы» — получишь +7 дней бесплатного доступа!"
+            self.clipboard_clear()
+            self.clipboard_append(msg)
+            self.promo_status_lbl.configure(text="📤 Текст с ссылкой и промокодом скопирован! Отправьте его другу.", text_color=COLOR_CONNECTED)
+
+    def _render_referral(self, ref):
+        if not ref:
+            return
+        code = ref.get("code") or ""
+        if code:
+            self.my_ref_code_var.set(code)
+        self.ref_stat_invited.configure(text=f"👥 Приглашено: {ref.get('friends_invited', 0)}")
+        self.ref_stat_paid.configure(text=f"💳 Оплатили: {ref.get('friends_paid', 0)}")
+        bonus = ref.get("bonus_days_earned", 0)
+        self.ref_stat_bonus.configure(text=f"⚡ Начислено: +{bonus} дн.")
+
+        for child in self.ref_history_frame.winfo_children():
+            child.destroy()
+
+        history = ref.get("history") or []
+        if history:
+            h_lbl = ctk.CTkLabel(
+                self.ref_history_frame,
+                text="📜 Последние начисления:",
+                font=ctk.CTkFont(family="Segoe UI", size=11, weight="bold"),
+                text_color=COLOR_TEXT_MUTED
+            )
+            h_lbl.pack(anchor="w", pady=(2, 2))
+            for item in history[:3]:
+                row = ctk.CTkFrame(self.ref_history_frame, fg_color="transparent")
+                row.pack(fill="x", pady=1)
+                ctk.CTkLabel(row, text=f"• {item.get('date', '')} — {item.get('event', '')}", font=ctk.CTkFont(family="Segoe UI", size=10), text_color=COLOR_TEXT_MUTED).pack(side="left")
+                ctk.CTkLabel(row, text=item.get("days", ""), font=ctk.CTkFont(family="Segoe UI", size=10, weight="bold"), text_color=COLOR_CONNECTED).pack(side="right")
 
     def activate_trial_action(self):
         self.trial_btn.configure(text="⏳ Активация 3 дней...", state="disabled")

@@ -13,7 +13,7 @@ import urllib.request
 import subprocess
 import threading
 
-CURRENT_VERSION = "2.6.6"
+CURRENT_VERSION = "2.7.0"
 GITHUB_REPO = "Pinkman009/VPN"
 RELEASES_API = f"https://api.github.com/repos/{GITHUB_REPO}/releases/latest"
 
@@ -238,41 +238,41 @@ def install_update_and_restart(new_exe_path):
 chcp 65001 >nul
 title Обновление Unblocknet...
 echo ===================================================
-echo     Обновление Unblocknet до новой версии...
+echo     Обновление Unblocknet до версии 2.7.0...
 echo ===================================================
 echo.
-echo Ожидание завершения предыдущего процесса (PID {pid})...
+echo Ожидание завершения предыдущего процесса...
 timeout /t 2 /nobreak >nul
 
-:: Terminate full process tree and any orphaned xray instances
-taskkill /F /T /PID {pid} >nul 2>&1
+:: Terminate all running instances of Unblocknet and xray core
+taskkill /F /IM Unblocknet.exe >nul 2>&1
 taskkill /F /IM xray.exe >nul 2>&1
+taskkill /F /T /PID {pid} >nul 2>&1
 timeout /t 1 /nobreak >nul
 
-:: Create backup of current executable
+:: Windows Atomic Swap: Move running executable to .old (NTFS allows rename on open handles)
+set RETRY=0
+:RETRY_MOVE
 if exist "{running_exe}" (
-    copy /Y "{running_exe}" "{running_exe}.bak" >nul 2>&1
+    move /Y "{running_exe}" "{running_exe}.old" >nul 2>&1
+    if errorlevel 1 (
+        set /a RETRY+=1
+        if %RETRY% leq 6 (
+            timeout /t 1 /nobreak >nul
+            goto RETRY_MOVE
+        )
+    )
 )
 
 echo Замена исполняемого файла...
-set RETRY=0
-:RETRY_COPY
 copy /Y "{new_exe_path}" "{running_exe}" >nul
 if errorlevel 1 (
-    set /a RETRY+=1
-    if %RETRY% leq 8 (
-        echo Файл занят, повторная попытка через 1 сек...
-        timeout /t 1 /nobreak >nul
-        goto RETRY_COPY
-    ) else (
-        echo Ошибка: не удалось обновить файл {running_exe}.
-        if exist "{running_exe}.bak" (
-            echo Восстановление предыдущей версии...
-            copy /Y "{running_exe}.bak" "{running_exe}" >nul 2>&1
-        )
-        pause
-        exit /b 1
-    )
+    echo Ошибка: не удалось обновить файл {running_exe}.
+    if exist "{running_exe}.old" move /Y "{running_exe}.old" "{running_exe}" >nul 2>&1
+    pause
+    exit /b 1
+) else (
+    if exist "{running_exe}.old" del /F /Q "{running_exe}.old" >nul 2>&1
 )
 
 echo Обновление успешно установлено!
@@ -281,7 +281,6 @@ start "" "{running_exe}"
 
 timeout /t 3 /nobreak >nul
 del "{new_exe_path}" >nul 2>&1
-if exist "{running_exe}.bak" del "{running_exe}.bak" >nul 2>&1
 (goto) 2>nul & del "%~f0"
 """
 
