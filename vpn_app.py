@@ -246,7 +246,7 @@ class UpdateProgressDialog(ctk.CTkToplevel):
         size_txt = f"Размер обновления: {size_mb:.1f} МБ" if size_mb > 0 else ""
         sub = ctk.CTkLabel(
             self,
-            text=f"Загрузка свежего релиза с GitHub...\n{size_txt}",
+            text=f"Загрузка компонентов обновления...\n{size_txt}",
             font=ctk.CTkFont(family="Segoe UI", size=12),
             text_color=COLOR_TEXT_MUTED
         )
@@ -863,7 +863,17 @@ class TeletokApp(ctk.CTk):
             fg_color=COLOR_PRIMARY,
             command=self.on_adblock_toggled
         )
-        self.adblock_cb.pack(anchor="w", padx=16, pady=4)
+        self.adblock_cb.pack(anchor="w", padx=16, pady=(4, 1))
+
+        self.adblock_hint = ctk.CTkLabel(
+            sys_card,
+            text="Блокирует баннеры, трекеры и рекламу на сайтах. Для вырезания видео-прероллов в плеере YouTube используйте расширение uBlock Origin.",
+            font=ctk.CTkFont(family="Segoe UI", size=10),
+            text_color=COLOR_TEXT_MUTED,
+            wraplength=440,
+            justify="left"
+        )
+        self.adblock_hint.pack(anchor="w", padx=36, pady=(0, 4))
 
         self.webrtc_btn = ctk.CTkButton(
             sys_card,
@@ -893,7 +903,7 @@ class TeletokApp(ctk.CTk):
 
         self.report_issue_btn = ctk.CTkButton(
             sys_card,
-            text="📋 Отправить отчет об ошибке разработчику (GitHub)",
+            text="📋 Отправить отчет об ошибке разработчику",
             font=ctk.CTkFont(family="Segoe UI", size=12),
             height=34,
             fg_color="#202236",
@@ -910,7 +920,7 @@ class TeletokApp(ctk.CTk):
 
         promo_head = ctk.CTkLabel(
             self.promo_card,
-            text="🎟️ Промокод, код активации или email разработчика:",
+            text="🎟️ Промокод или код активации:",
             font=ctk.CTkFont(family="Segoe UI", size=13, weight="bold"),
             text_color=COLOR_TEXT_WHITE
         )
@@ -918,7 +928,7 @@ class TeletokApp(ctk.CTk):
 
         promo_desc = ctk.CTkLabel(
             self.promo_card,
-            text="Введите промокод или ваш email разработчика (igorsvincov@yandex.ru):",
+            text="Если у вас есть подарочный промокод или код продления подписки:",
             font=ctk.CTkFont(family="Segoe UI", size=11),
             text_color=COLOR_TEXT_MUTED
         )
@@ -929,7 +939,7 @@ class TeletokApp(ctk.CTk):
 
         self.code_entry = ctk.CTkEntry(
             code_row,
-            placeholder_text="Введите промокод или email",
+            placeholder_text="Введите промокод",
             font=ctk.CTkFont(family="Segoe UI", size=12),
             height=34,
             fg_color="#1d1e30",
@@ -959,13 +969,13 @@ class TeletokApp(ctk.CTk):
         )
         self.promo_status_lbl.pack(anchor="w", padx=14, pady=(0, 4))
 
-        # App Update Card (GitHub Releases)
+        # App Update Card (Releases)
         self.update_card = ctk.CTkFrame(self.page_settings, fg_color=COLOR_SURFACE, corner_radius=12, border_width=1, border_color=COLOR_BORDER)
         self.update_card.pack(fill="x", pady=(0, 10), ipady=6)
 
         update_head = ctk.CTkLabel(
             self.update_card,
-            text="🔄 Обновление приложения (GitHub):",
+            text="🔄 Обновление приложения:",
             font=ctk.CTkFont(family="Segoe UI", size=13, weight="bold"),
             text_color=COLOR_TEXT_WHITE
         )
@@ -1077,7 +1087,7 @@ class TeletokApp(ctk.CTk):
         ).start()
 
     def send_error_report_action(self):
-        self.report_issue_btn.configure(text="⏳ Отправка отчета в GitHub...", state="disabled")
+        self.report_issue_btn.configure(text="⏳ Отправка отчета...", state="disabled")
         def _worker():
             ok, res_or_url = send_diagnostic_report(
                 title="Ручной отчет пользователя о неполадках",
@@ -1086,21 +1096,21 @@ class TeletokApp(ctk.CTk):
             def _cb():
                 self.report_issue_btn.configure(state="normal")
                 if ok:
-                    self.report_issue_btn.configure(text="✔ Отчет успешно отправлен на GitHub!")
-                    self.after(4000, lambda: self.report_issue_btn.configure(text="📋 Отправить отчет об ошибке разработчику (GitHub)"))
+                    self.report_issue_btn.configure(text="✔ Отчет успешно отправлен разработчику!")
+                    self.after(4000, lambda: self.report_issue_btn.configure(text="📋 Отправить отчет об ошибке разработчику"))
                 else:
                     self.report_issue_btn.configure(text="✖ Ошибка отправки отчета")
-                    self.after(3000, lambda: self.report_issue_btn.configure(text="📋 Отправить отчет об ошибке разработчику (GitHub)"))
+                    self.after(3000, lambda: self.report_issue_btn.configure(text="📋 Отправить отчет об ошибке разработчику"))
             self.after(0, _cb)
         threading.Thread(target=_worker, daemon=True).start()
 
     # -----------------------------------------------------------------------
-    # In-App Auto-Update Methods (GitHub Releases)
+    # In-App Auto-Update Methods (Releases)
     # -----------------------------------------------------------------------
     def check_updates_background(self, manual=False):
         if manual:
             self.check_update_btn.configure(text="⏳ Проверка...", state="disabled")
-            self.update_status_lbl.configure(text="Связь с GitHub Releases...", text_color=COLOR_PRIMARY)
+            self.update_status_lbl.configure(text="Проверка обновлений...", text_color=COLOR_PRIMARY)
 
         def _worker():
             res = check_for_updates()

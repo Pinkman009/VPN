@@ -925,9 +925,9 @@ def do_link_create(dev, acc):
 def do_activate(dev, acc, payload):
     raw_code = str(payload.get("code") or "").strip()
     if not raw_code:
-        raise ApiError("empty_code", "Введите email разработчика, проверочный код или промокод", 400)
+        raise ApiError("empty_code", "Введите промокод или код активации", 400)
 
-    # 1. Прямая авторизация разработчика по email или мастер-ключу
+    # 1. Прямая авторизация владельца по email или мастер-ключу
     admins = load_admins()
     owner_emails = [e.lower() for e in admins.get("owner_emails", [])]
     owner_secret = env("OWNER_SECRET_KEY") or "DEV-UNBLOCKNET-2026"
@@ -952,7 +952,7 @@ def do_activate(dev, acc, payload):
                 dev_name = dev["name"] if dev and "name" in dev.keys() else "Компьютер"
                 log(f"DEVELOPER ACTIVATED: device #{dev['id']} ({dev_name}) linked to owner account #{owner['id']}")
                 res = me_payload(conn, owner, dev["id"])
-                res["message"] = "👑 Доступ разработчика подтвержден! Пожизненный безлимитный доступ активирован на этом ПК."
+                res["message"] = "👑 Доступ подтвержден! Безлимитный режим успешно активирован на этом ПК."
                 return res
             finally:
                 conn.close()
@@ -960,7 +960,7 @@ def do_activate(dev, acc, payload):
     # 2. Числовые коды: 6 цифр (OTP) или 8 цифр (промокод/привязка)
     code = re.sub(r"\D", "", raw_code)
     if len(code) not in (6, 8):
-        raise ApiError("bad_code", "Неверный код. Введите email разработчика, 6-значный OTP или 8-значный промокод.", 400)
+        raise ApiError("bad_code", "Неверный код активации или промокод", 400)
 
     with DB_LOCK:
         conn = db()
@@ -974,7 +974,7 @@ def do_activate(dev, acc, payload):
                 if not owner:
                     raise ApiError("no_owner", "Аккаунт владельца не настроен", 500)
                 conn.execute("UPDATE devices SET account_id=? WHERE id=?", (owner["id"], dev["id"]))
-                target_id, msg = owner["id"], "👑 Устройство привязано к аккаунту разработчика. Безлимитный доступ активирован."
+                target_id, msg = owner["id"], "👑 Устройство привязано к аккаунту. Безлимитный доступ активирован."
             elif row["kind"] == "link":
                 target = get_account(conn, row["account_id"])
                 if not target or target["banned"]:

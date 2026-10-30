@@ -252,6 +252,39 @@ DEFAULT_SETTINGS = {
     "webrtc_protect": True
 }
 
+ADBLOCK_DOMAINS_DEFAULT = [
+    # Google & YouTube Ad Networks & Tracking
+    "googleads.g.doubleclick.net",
+    "pagead2.googlesyndication.com",
+    "adservice.google.com",
+    "pubads.g.doubleclick.net",
+    "securepubads.g.doubleclick.net",
+    "static.doubleclick.net",
+    "s0.2mdn.net",
+    "ad.doubleclick.net",
+    "ads.doubleclick.net",
+    "doubleclick.net",
+    "googleadservices.com",
+    "googlesyndication.com",
+    "googletagservices.com",
+    "googleads.com",
+    "2mdn.net",
+    "video-stats.l.google.com",
+    "stats.g.doubleclick.net",
+    "safeframe.googlesyndication.com",
+    "ad.youtube.com",
+    "ads.youtube.com",
+    # RU Ad Networks & Analytics
+    "ads.vk.com",
+    "ad.mail.ru",
+    "top-fwz1.mail.ru",
+    "target.my.com",
+    "an.yandex.ru",
+    "mc.yandex.ru",
+    "ad.adriver.ru",
+    "content.adriver.ru"
+]
+
 SERVER_API_URL = "http://193.233.138.42:2096"
 REG_KEY_UNBLOCKNET = r"Software\Unblocknet"
 
@@ -482,7 +515,7 @@ def activate_code(code, timeout=6):
             settings["client_uuid"] = res["node"]["uuid"]
             save_settings(settings)
         return True, res.get("message", "Код успешно активирован!"), res
-    return False, res.get("message", "Код или email недействителен"), None
+    return False, res.get("message", "Неверный код активации или промокод"), None
 
 def send_diagnostic_report(title="Отчет об ошибке клиента", detail="Пользователь запросил проверку"):
     """Collects recent client logs, system info and sends an issue to GitHub via VPS API."""
@@ -501,7 +534,7 @@ def send_diagnostic_report(title="Отчет об ошибке клиента", 
         from vpn_updater import CURRENT_VERSION
         app_ver = CURRENT_VERSION
     except Exception:
-        app_ver = "2.6.1"
+        app_ver = "2.6.2"
 
     payload = {
         "title": str(title)[:140],
@@ -765,11 +798,16 @@ class VpnEngine:
             })
 
         adblock_list = ["geosite:category-ads-all"]
-        if self.settings.get("adblock_domains"):
-            for ad in self.settings.get("adblock_domains", []):
-                ad = ad.strip()
-                if ad:
-                    adblock_list.append(f"domain:{ad}")
+        all_ad_domains = list(self.settings.get("adblock_domains") or [])
+        for fallback_ad in ADBLOCK_DOMAINS_DEFAULT:
+            if fallback_ad not in all_ad_domains:
+                all_ad_domains.append(fallback_ad)
+        for ad in all_ad_domains:
+            ad = ad.strip()
+            if ad:
+                ad_rule = f"domain:{ad}"
+                if ad_rule not in adblock_list:
+                    adblock_list.append(ad_rule)
 
         routing_rules = [
             {
